@@ -71,46 +71,51 @@ class MyDataset(Dataset):
         return auds
     
     def process_img(self, img, lms_path, img_ex, lms_path_ex):
+        def read_lms(lms_path):
+            lms_list = []
+            with open(lms_path, "r") as f:
+                lines = f.read().splitlines()
+                for line in lines:
+                    arr = np.array(line.split(" "), dtype=np.float32)
+                    lms_list.append(arr)
+            return np.array(lms_list, dtype=np.int32)
 
-        lms_list = []
-        with open(lms_path, "r") as f:
-            lines = f.read().splitlines()
-            for line in lines:
-                arr = line.split(" ")
-                arr = np.array(arr, dtype=np.float32)
-                lms_list.append(arr)
-        lms = np.array(lms_list, dtype=np.int32)
+        # đọc landmarks
+        lms = read_lms(lms_path)
         xmin = lms[1][0]
         ymin = lms[52][1]
-        
         xmax = lms[31][0]
         width = xmax - xmin
         ymax = ymin + width
-        
-        crop_img = img[ymin:ymax, xmin:xmax]
-        crop_img = cv2.resize(crop_img, (168, 168), cv2.INTER_AREA)
+        if xmin < 0 or ymin < 0 or xmax > img.shape[1] or ymax > img.shape[0] or width <= 0:
+            crop_img = cv2.resize(img, (168, 168), cv2.INTER_AREA)
+        else:
+            crop_img = img[ymin:ymax, xmin:xmax]
+            if crop_img is None or crop_img.size == 0:
+                crop_img = cv2.resize(img, (168, 168), cv2.INTER_AREA)
+            else:
+                crop_img = cv2.resize(crop_img, (168, 168), cv2.INTER_AREA)
+
         img_real = crop_img[4:164, 4:164].copy()
         img_real_ori = img_real.copy()
         img_masked = cv2.rectangle(img_real,(5,5,150,145),(0,0,0),-1)
-        
-        lms_list = []
-        with open(lms_path_ex, "r") as f:
-            lines = f.read().splitlines()
-            for line in lines:
-                arr = line.split(" ")
-                arr = np.array(arr, dtype=np.float32)
-                lms_list.append(arr)
-        lms = np.array(lms_list, dtype=np.int32)
+        lms = read_lms(lms_path_ex)
         xmin = lms[1][0]
         ymin = lms[52][1]
-        
         xmax = lms[31][0]
         width = xmax - xmin
         ymax = ymin + width
-        crop_img = img_ex[ymin:ymax, xmin:xmax]
-        crop_img = cv2.resize(crop_img, (168, 168), cv2.INTER_AREA)
+
+        if xmin < 0 or ymin < 0 or xmax > img_ex.shape[1] or ymax > img_ex.shape[0] or width <= 0:
+            crop_img = cv2.resize(img_ex, (168, 168), cv2.INTER_AREA)
+        else:
+            crop_img = img_ex[ymin:ymax, xmin:xmax]
+            if crop_img is None or crop_img.size == 0:
+                crop_img = cv2.resize(img_ex, (168, 168), cv2.INTER_AREA)
+            else:
+                crop_img = cv2.resize(crop_img, (168, 168), cv2.INTER_AREA)
+
         img_real_ex = crop_img[4:164, 4:164].copy()
-        
         img_real_ori = img_real_ori.transpose(2,0,1).astype(np.float32)
         img_masked = img_masked.transpose(2,0,1).astype(np.float32)
         img_real_ex = img_real_ex.transpose(2,0,1).astype(np.float32)
