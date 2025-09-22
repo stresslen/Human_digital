@@ -107,7 +107,7 @@ for i in range(audio_feats.shape[0]):
     
     audio_feat = get_audio_features(audio_feats, i)
     if mode=="hubert":
-        audio_feat = audio_feat.reshape(16,32,32)
+        audio_feat = audio_feat.reshape(32,32,32)
     if mode=="wenet":
         audio_feat = audio_feat.reshape(128,16,32)
     audio_feat = audio_feat[None]
